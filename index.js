@@ -1,15 +1,8 @@
 const express = require('express')
 const app = express()
-const fs = require('fs');
-const https = require('https');
-var httpProxy = require('http-proxy');
-var apiProxy = httpProxy.createProxyServer();
 var bodyParser = require("body-parser");
 const Client = require('node-rest-client').Client
 var localtunnel = require('localtunnel');
-
-var privateKey = fs.readFileSync('/home/brody/.cert/private.pem');
-var certificate = fs.readFileSync('/home/brody/.cert/certificate.pem');
 
 var client = new Client();
 
@@ -21,24 +14,12 @@ app.post('/action', (req, res) => {
     processV1Request(req, res)
 })
 
-app.all("/", function (req, res) {
-    res.send('Chatbot-demo webhook.')
-});
+app.all("/", (req, res) => res.send('Chatbot-demo webhook.'));
 
-https.createServer({
-    key: privateKey,
-    cert: certificate
-}, app).listen(8081);
+app.listen(8081, () => console.log('Example app listening on port 8081!'))
 
-var tunnel = localtunnel(8081, { subdomain: 'chatbot' }, function (err, tunnel) {
-    if (err) {
-        console.log(err)
-    }
-
-    tunnel.url;
-    console.log(tunnel.url)
-});
-
+var tunnel = localtunnel(8081, { subdomain: 'chatbot' }, (err, tunnel) => console.log(tunnel.url));
+tunnel.on('close', () => process.exit());
 
 /////////
 
@@ -48,13 +29,14 @@ var tunnel = localtunnel(8081, { subdomain: 'chatbot' }, function (err, tunnel) 
 function processV1Request(request, response) {
     let action = request.body.result.action
     let parameters = request.body.result.parameters
+    let apiUrl = 'https://brody.localtunnel.me'
 
     const actionHandlers = {
         'input.welcome': () => {
             sendResponse('Hallo, welkom in de USER chatbot')
         },
         'notitie.check-client': () => {
-            client.get('https://brody.localtunnel.me/clients?name=' + parameters.client,
+            client.get(`${apiUrl}/clients?name=${parameters.client}`,
                 (data, response) => {
 
                     let replies = data.map(c => c.name);
@@ -88,13 +70,12 @@ function processV1Request(request, response) {
                 headers: { "Content-Type": "application/json" }
             };
 
-            client.put("https://brody.localtunnel.me/text/save", args, function (data, response) {
+            client.put(`${apiUrl}/text/save`, args, function (data, response) {
                 sendResponse('Ik heb het voor u opgeslagen.')
             });
 
         },
         'notitie-toevoegen.notitie-toevoegen-valideer-client.notitie-toevoegen-valideer-client-opvoeren-voortgang': () => {
-
             var args = {
                 data: {
                     clientId: parameters.clientId,
@@ -104,12 +85,28 @@ function processV1Request(request, response) {
                 headers: { "Content-Type": "application/json" }
             };
 
-            client.put("https://brody.localtunnel.me/text/save", args, function (data, response) {
+            client.put(`${apiUrl}/text/save`, args, function (data, response) {
                 sendResponse('Ik heb het voor u opgeslagen.')
+                console.log(data)
+            });
+        },
+        'notitie-toevoegen.notitie-toevoegen-valideer-client.notitie-toevoegen-valideer-client-opvoeren-afspraak': () => {
+            var args = {
+                data: {
+                    clientId: parameters.clientId,
+                    text: parameters.tekst,
+                    appointmentId: parameters.appointmentId
+                },
+                headers: { "Content-Type": "application/json" }
+            };
+
+            client.put(`${apiUrl}/text/save`, args, function (data, response) {
+                sendResponse('Ik heb het voor u opgeslagen.')
+                console.log(data)
             });
         },
         'notitie-toevoegen.notitie-toevoegen-valideer-client': () => {
-            client.get('https://brody.localtunnel.me/clients?name=' + parameters.client,
+            client.get(`${apiUrl}/clients?name=${parameters.client}`,
                 (data, response) => {
 
                     let client = data[0];
