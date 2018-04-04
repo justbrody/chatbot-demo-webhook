@@ -7,9 +7,8 @@ var apiProxy = httpProxy.createProxyServer();
 var bodyParser = require("body-parser");
 const Client = require('node-rest-client').Client
 
-var privateKey = fs.readFileSync('~/.cert/private.pem');
-var certificate = fs.readFileSync('~/.cert/certificate.pem');
-
+var privateKey = fs.readFileSync('/home/brody/.cert/private.pem');
+var certificate = fs.readFileSync('/home/brody/.cert/certificate.pem');
 
 var client = new Client();
 
@@ -21,10 +20,8 @@ app.post('/action', (req, res) => {
     processV1Request(req, res)
 })
 
-app.get('/.well-known/acme-challenge/9dMJHuGYp02h2vuhch1f4vEznRp4eKl8_e8NAEEgeAM', (req, res) => res.send('9dMJHuGYp02h2vuhch1f4vEznRp4eKl8_e8NAEEgeAM.bYHSaVWTI55w-JUiQjpFCu4Ukq6WTLvJdWICOwzAKgc'))
-
-app.all("/api/*", function (req, res) {
-    apiProxy.web(req, res, { target: 'http://76440078.ngrok.io/' });
+app.all("/", function (req, res) {
+    res.send('Chatbot-demo webhook.')
 });
 
 https.createServer({
