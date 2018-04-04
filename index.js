@@ -6,6 +6,7 @@ var httpProxy = require('http-proxy');
 var apiProxy = httpProxy.createProxyServer();
 var bodyParser = require("body-parser");
 const Client = require('node-rest-client').Client
+var localtunnel = require('localtunnel');
 
 var privateKey = fs.readFileSync('/home/brody/.cert/private.pem');
 var certificate = fs.readFileSync('/home/brody/.cert/certificate.pem');
@@ -28,6 +29,15 @@ https.createServer({
     key: privateKey,
     cert: certificate
 }, app).listen(8081);
+
+var tunnel = localtunnel(8081, { subdomain: 'chatbot' }, function (err, tunnel) {
+    if (err) {
+        console.log(err)
+    }
+
+    tunnel.url;
+    console.log(tunnel.url)
+});
 
 
 /////////
@@ -120,7 +130,7 @@ function processV1Request(request, response) {
                                 "lifespan": 5,
                                 "parameters": {
                                     "clientId": client.id,
-                                    "appointmentId": ''+client.lastAppointment+'',
+                                    "appointmentId": '' + client.lastAppointment + '',
                                     "appointmentDate": client.lastAppointmentDate
                                 }
                             }
